@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка сервисов</title>
+<style>
+  :root { --bg:#EDF1EA; --surface:#F9FBF7; --text:#2F3A33; --muted:#7D897F; --line:#D9E1D5; --accent:#6F8FA8; --ok:#6E9C72; --slow:#C29A4E; --bad:#B5676A; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-family: Georgia, serif; font-style:italic; font-weight:500; font-size:28px; margin:0 0 12px; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; margin:16px 0; }
+  ol { margin:0; padding-left:20px; }
+  button { width:100%; padding:14px; border:0; border-radius:14px; background:var(--accent); color:#fff; font-size:17px; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.6; }
+  ul { list-style:none; margin:0; padding:0; }
+  li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  li:last-child { border-bottom:0; }
+  .host { word-break:break-all; }
+  .st { white-space:nowrap; color:var(--muted); }
+  .ok { color:var(--ok); } .slow { color:var(--slow); } .bad { color:var(--bad); }
+  textarea { width:100%; min-height:220px; border:1px solid var(--line); border-radius:14px; padding:12px; font:12px/1.4 ui-monospace, monospace; background:var(--surface); color:var(--text); }
+  .muted { color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Проверка сервисов</h1>
+  <div class="card">
+    <ol>
+      <li style="display:list-item;border:0;padding:2px 0;font-size:16px">Выключи VPN.</li>
+      <li style="display:list-item;border:0;padding:2px 0;font-size:16px">Нажми «Проверить» и подожди ~10 секунд.</li>
+      <li style="display:list-item;border:0;padding:2px 0;font-size:16px">Нажми «Скопировать результат» и пришли его мне.</li>
+    </ol>
+    <p class="muted">Если эта страница открылась без VPN — GitHub Pages уже работает.</p>
+  </div>
+  <button id="run">Проверить</button>
+  <div class="card"><ul id="list"></ul></div>
+  <textarea id="out" readonly placeholder="Здесь появится результат"></textarea>
+  <p></p>
+  <button id="copy">Скопировать результат</button>
+</main>
+<script>
+const targets = [
+  ["Supabase (сайт)", "https://supabase.com/favicon.ico"],
+  ["Supabase (API)", "https://api.supabase.com"],
+  ["Supabase (проекты)", "https://supabase.co"],
+  ["GitHub Pages", "https://pages.github.com"],
+  ["Vercel (сайт)", "https://vercel.com/favicon.ico"],
+  ["Vercel (хостинг)", "https://vercel.app"],
+  ["Netlify", "https://www.netlify.app"],
+  ["Cloudflare Pages", "https://pages.dev"],
+  ["Firebase", "https://firestore.googleapis.com"],
+  ["Timeweb Cloud", "https://timeweb.cloud/favicon.ico"],
+  ["Yandex Cloud", "https://yandex.cloud/favicon.ico"],
+];
+const list = document.getElementById("list");
+const out = document.getElementById("out");
+const runBtn = document.getElementById("run");
+
+function render(states) {
+  list.innerHTML = "";
+  targets.forEach(([name, url], i) => {
+    const s = states[i];
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="host"><b>${name}</b><br><span class="muted">${url}</span></span><span class="st ${s.cls}">${s.text}</span>`;
+    list.appendChild(li);
+  });
+}
+
+async function probe(url) {
+  const ctrl = new AbortController();
+  const t0 = performance.now();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    await fetch(url + (url.includes("?") ? "&" : "?") + "_=" + Date.now(), { mode: "no-cors", cache: "no-store", signal: ctrl.signal });
+    const ms = Math.round(performance.now() - t0);
+    return ms > 4000 ? { cls: "slow", text: `медленно, ${ms} мс`, code: "OK-SLOW", ms } : { cls: "ok", text: `ок, ${ms} мс`, code: "OK", ms };
+  } catch (e) {
+    const ms = Math.round(performance.now() - t0);
+    return ctrl.signal.aborted ? { cls: "bad", text: "таймаут", code: "NO-TIMEOUT", ms } : { cls: "bad", text: "нет соединения", code: "NO", ms };
+  } finally { clearTimeout(timer); }
+}
+
+render(targets.map(() => ({ cls: "", text: "—" })));
+
+runBtn.onclick = async () => {
+  runBtn.disabled = true; runBtn.textContent = "Проверяю…";
+  const states = targets.map(() => ({ cls: "", text: "проверяю…" }));
+  render(states);
+  await Promise.all(targets.map(async ([, url], i) => { states[i] = await probe(url); render(states); }));
+  const lines = [
+    "Проверка сервисов",
+    "Время: " + new Date().toString(),
+    "Устройство: " + navigator.userAgent,
+    "",
+    ...targets.map(([name, url], i) => `${states[i].code.padEnd(10)} ${String(states[i].ms).padStart(5)} мс  ${name}  ${url}`),
+  ];
+  out.value = lines.join("\n");
+  runBtn.disabled = false; runBtn.textContent = "Проверить ещё раз";
+};
+
+document.getElementById("copy").onclick = async () => {
+  if (!out.value) return;
+  try { await navigator.clipboard.writeText(out.value); } catch { out.select(); document.execCommand("copy"); }
+  document.getElementById("copy").textContent = "Скопировано ✓";
+};
+</script>
+</body>
+</html>
