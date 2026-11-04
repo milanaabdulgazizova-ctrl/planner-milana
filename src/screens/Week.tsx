@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { DayBoard, DayNoteField } from '../components/DayBoard';
 import { TaskGroup } from '../components/TaskGroup';
 import { WeekFocus } from '../components/WeekFocus';
+import { HabitChecks } from '../components/HabitChecks';
+import { useHabitChecks, useHabits } from '../data/habits';
 import { categoriesForDates } from '../data/categories';
 import { notesForDates } from '../data/days';
 import { useSpheres } from '../data/spheres';
@@ -19,6 +21,8 @@ export function WeekScreen({ onOpenDay }: { onOpenDay: (date: string) => void })
   const someday = useLiveQuery(somedayTasks, []) ?? [];
   const sphereList = useSpheres();
   const spheres = useMemo(() => new Map(sphereList.map((s) => [s.id, s])), [sphereList]);
+  const habits = useHabits();
+  const checks = useHabitChecks(days);
   const isCurrent = weekStart === startOfWeek(today);
   const [somedayOpen, setSomedayOpen] = useState(() => localStorage.getItem('planner.somedayOpen') === '1');
   const toggleSomeday = () => {
@@ -74,6 +78,7 @@ export function WeekScreen({ onOpenDay }: { onOpenDay: (date: string) => void })
               </button>
             </header>
             <DayBoard date={d} tasks={tasks.filter((t) => t.date === d)} categories={categories.filter((c) => c.date === d)} spheres={spheres} />
+            <HabitChecks date={d} habits={habits} checks={checks} />
             <DayNoteField date={d} note={notes.find((n) => n.date === d)} />
           </article>
         ))}

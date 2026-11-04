@@ -64,7 +64,7 @@ h2 { font-size: 28px; line-height: 1.15; }
 
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   padding: 6px 4px calc(6px + var(--safe-bottom));
   background: var(--surface);
   border-top: 1px solid var(--line);
@@ -322,3 +322,41 @@ h3 { font-family: var(--font-head); font-style: italic; font-weight: 500; font-s
 .bg-row .color-picker { padding: 0; justify-content: flex-end; }
 .swatch.custom { position: relative; display: inline-grid; place-items: center; cursor: pointer; color: var(--muted); font-size: 16px; overflow: hidden; }
 .swatch.custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: 0; padding: 0; }
+
+/* ---------- повторы ---------- */
+.repeat-extra { margin-top: 8px; display: grid; gap: 8px; }
+.repeat-desc { margin: 6px 0 0; }
+.weekday-toggles { display: flex; gap: 4px; flex-wrap: wrap; }
+.wd {
+  min-width: 38px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface);
+  font-size: 13px; color: var(--muted);
+}
+.wd.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ask { width: 100%; }
+.ask p { margin: 0 0 8px; font-size: 14px; }
+.ask-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.ask-buttons button { flex: 1; margin: 0; min-width: 140px; }
+
+/* ---------- привычки ---------- */
+.habit-checks { margin-top: 10px; }
+.cat-name.static { cursor: default; padding: 2px 0; }
+.task.habit { border-bottom: 1px solid var(--line); cursor: pointer; }
+.task.habit:last-child { border-bottom: 0; }
+.habits-grid { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 12px; max-width: 1100px; }
+@media (min-width: 900px) { .habits-grid { grid-template-columns: repeat(2, 1fr); } }
+.habit-card { min-height: 0; padding-bottom: 14px; }
+.habit-head { display: flex; align-items: center; gap: 8px; }
+.habit-name { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-family: var(--font-head); font-style: italic; font-size: 22px; padding: 0; }
+.link.small { font-size: 13px; padding: 0 0 6px; }
+.habit-stats { display: flex; gap: 16px; font-size: 14px; color: var(--muted); margin: 6px 0 10px; }
+.habit-stats b { color: var(--text); font-weight: 600; }
+.month-dots { display: grid; grid-template-columns: repeat(auto-fill, 14px); gap: 5px; }
+.mdot { width: 14px; height: 14px; border-radius: 5px; border: 1.5px solid var(--line); }
+.mdot.done { background: var(--accent); border-color: var(--accent); }
+.mdot.missed { border-color: var(--muted); }
+.mdot.future { border-style: dashed; }
+.mdot.off { border-color: transparent; background: var(--soft); opacity: 0.6; }
+.mdot.today { outline: 1.5px solid var(--text); outline-offset: 1px; }
+.habit-add form { display: grid; gap: 8px; }
+.habit-add input { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px; font-size: 16px; outline: none; }
+.habit-add .primary { margin-top: 4px; }

@@ -60,10 +60,10 @@ export function PlannerDnd({ children, renderOverlay }: { children: ReactNode; r
     if (!task || !target) return;
     if (target.type === 'task') {
       if (target.task.id === task.id) return;
-      void moveTask(task.id, target.task.date, target.task.categoryId ?? null, target.task.id);
+      void moveTask(task, target.task.date, target.task.categoryId ?? null, target.task.id);
     } else {
       if (target.date === task.date && target.categoryId === (task.categoryId ?? null)) return;
-      void moveTask(task.id, target.date, target.categoryId);
+      void moveTask(task, target.date, target.categoryId);
     }
   };
 

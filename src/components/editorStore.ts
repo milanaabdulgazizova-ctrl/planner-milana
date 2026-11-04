@@ -1,20 +1,21 @@
 import { useSyncExternalStore } from 'react';
+import type { Task } from '../data/db';
 
-// Какая задача сейчас открыта в окне редактирования.
-let openId: string | null = null;
+// Какая задача сейчас открыта в окне редактирования (может быть копией повтора «на лету»).
+let open: Task | null = null;
 const listeners = new Set<() => void>();
 
-export function openTaskEditor(id: string) {
-  openId = id;
+export function openTaskEditor(task: Task) {
+  open = task;
   listeners.forEach((l) => l());
 }
 export function closeTaskEditor() {
-  openId = null;
+  open = null;
   listeners.forEach((l) => l());
 }
-export function useOpenTaskId() {
+export function useOpenTask() {
   return useSyncExternalStore(
     (cb) => (listeners.add(cb), () => listeners.delete(cb)),
-    () => openId,
+    () => open,
   );
 }

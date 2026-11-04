@@ -4,6 +4,7 @@ import { WeekScreen } from './screens/Week';
 import { DayScreen } from './screens/Day';
 import { SomedayScreen } from './screens/Someday';
 import { SettingsScreen } from './screens/Settings';
+import { HabitsScreen } from './screens/Habits';
 import { SyncBadge } from './components/SyncBadge';
 import { PlannerDnd } from './components/dnd';
 import { TaskEditor } from './components/TaskEditor';
@@ -14,12 +15,13 @@ import { useUser } from './data/session';
 import { startAutoSync } from './data/sync';
 import { todayISO } from './lib/dates';
 
-export type Tab = 'week' | 'day' | 'someday' | 'settings';
+export type Tab = 'week' | 'day' | 'someday' | 'habits' | 'settings';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'week', label: 'Неделя', icon: 'M4 6h16M4 12h16M4 18h16' },
   { id: 'day', label: 'День', icon: 'M5 5h14v14H5zM5 9h14M9 3v4M15 3v4' },
   { id: 'someday', label: 'Когда-нибудь', icon: 'M12 4v16M4 12h16' },
+  { id: 'habits', label: 'Привычки', icon: 'M5 12l4 4 10-10M5 20h14' },
   { id: 'settings', label: 'Настройки', icon: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM4 12h2M18 12h2M12 4v2M12 18v2' },
 ];
 
@@ -64,6 +66,7 @@ export function App() {
           {tab === 'week' && <WeekScreen onOpenDay={openDay} />}
           {tab === 'day' && <DayScreen date={dayDate} onDateChange={setDayDate} />}
           {tab === 'someday' && <SomedayScreen />}
+          {tab === 'habits' && <HabitsScreen />}
           {tab === 'settings' && <SettingsScreen />}
         </main>
       </PlannerDnd>

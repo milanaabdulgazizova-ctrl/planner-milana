@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import type { RepeatRule } from '../lib/repeat';
 
 // Локальная база на устройстве (IndexedDB) — главный источник данных.
 // Облако нужно только для синхронизации между устройствами.
@@ -30,6 +31,31 @@ export interface Task extends SyncFields {
   /** Категория внутри дня. */
   categoryId?: string | null;
   note?: string;
+  /** Правило повтора. Задача с повтором — «шаблон серии», сама на экране не показывается. */
+  repeat?: RepeatRule | null;
+  /** Для копии повторяющейся задачи: id шаблона и исходная дата этой копии. */
+  seriesId?: string | null;
+  occurrenceDate?: string | null;
+  /** Копия «пропущена» (удалена только в этот раз). */
+  skipped?: boolean;
+  /** Только в памяти: копия, которой ещё нет в базе (появится при первом изменении). */
+  virtual?: boolean;
+}
+
+/** Привычка. Дни недели: 0 = пн … 6 = вс. */
+export interface Habit extends SyncFields {
+  name: string;
+  days: number[];
+  order: number;
+  /** С какой даты считать статистику. */
+  startDate: string;
+}
+
+/** Отметка привычки за день. id = uuidFrom('habit:' + habitId + ':' + date). */
+export interface HabitCheck extends SyncFields {
+  habitId: string;
+  date: string;
+  done: boolean;
 }
 
 /** Сфера жизни: работа, учёба… — цветная метка задачи. */
@@ -79,6 +105,8 @@ class PlannerDB extends Dexie {
   dayNotes!: Table<DayNote, string>;
   weekFocus!: Table<WeekFocus, string>;
   settings!: Table<Settings, string>;
+  habits!: Table<Habit, string>;
+  habitChecks!: Table<HabitCheck, string>;
   meta!: Table<Meta, string>;
 
   constructor() {
@@ -94,6 +122,17 @@ class PlannerDB extends Dexie {
       dayNotes: 'id, date, dirty',
       weekFocus: 'id, weekStart, dirty',
       settings: 'id, dirty',
+      meta: 'key',
+    });
+    this.version(3).stores({
+      tasks: 'id, date, dirty, occurrenceDate, seriesId',
+      spheres: 'id, dirty',
+      categories: 'id, date, dirty',
+      dayNotes: 'id, date, dirty',
+      weekFocus: 'id, weekStart, dirty',
+      settings: 'id, dirty',
+      habits: 'id, dirty',
+      habitChecks: 'id, date, habitId, dirty',
       meta: 'key',
     });
   }
@@ -113,6 +152,8 @@ export const SYNCED: Record<string, Table<any, string>> = {
   dayNote: db.dayNotes,
   weekFocus: db.weekFocus,
   settings: db.settings,
+  habit: db.habits,
+  habitCheck: db.habitChecks,
 };
 
 /** Меняется при добавлении новых видов записей — тогда скачиваем всё из облака заново. */

@@ -74,7 +74,7 @@ export function Timeline({ tasks, startHour, endHour, isToday, spheres }: { task
                 width: `calc(${100 / cols}% - 4px)`,
                 ['--sphere' as string]: sphere?.color ?? 'var(--accent)',
               }}
-              onClick={() => openTaskEditor(t.id)}
+              onClick={() => openTaskEditor(t)}
             >
               <span className="tl-time">{timeLabel(t)}</span> {t.title}
             </button>

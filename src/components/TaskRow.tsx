@@ -1,5 +1,5 @@
 import type { Sphere, Task } from '../data/db';
-import { updateTask } from '../data/tasks';
+import { setDone } from '../data/tasks';
 import { Checkbox } from './Checkbox';
 import { useTaskDnd } from './dnd';
 import { openTaskEditor } from './editorStore';
@@ -12,10 +12,11 @@ export function timeLabel(t: Pick<Task, 'start' | 'end'>) {
 export function TaskRowView({ task, sphere, dragging }: { task: Task; sphere?: Sphere; dragging?: boolean }) {
   return (
     <div className={'task' + (task.done ? ' done' : '') + (dragging ? ' overlay' : '')} style={sphere ? { ['--sphere' as string]: sphere.color } : undefined}>
-      <Checkbox checked={task.done} label={task.title} onChange={(v) => void updateTask(task.id, { done: v })} />
+      <Checkbox checked={task.done} label={task.title} onChange={(v) => void setDone(task, v)} />
       <span className="task-body">
         {task.start && <span className="task-time">{timeLabel(task)}</span>}
         <span className="task-title">{task.title}</span>
+        {task.seriesId ? <span className="task-note-mark" title="Повторяется">↻</span> : null}
         {task.note ? <span className="task-note-mark" title="Есть заметка">✎</span> : null}
       </span>
       {sphere && <span className="sphere-dot" title={sphere.name} />}
@@ -32,7 +33,7 @@ export function TaskRow({ task, sphere }: { task: Task; sphere?: Sphere }) {
       {...dnd.handleProps}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('.check')) return;
-        openTaskEditor(task.id);
+        openTaskEditor(task);
       }}
     >
       <TaskRowView task={task} sphere={sphere} />

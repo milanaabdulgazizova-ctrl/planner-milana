@@ -2,6 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo } from 'react';
 import { DayBoard, DayNoteField } from '../components/DayBoard';
 import { Timeline } from '../components/Timeline';
+import { HabitChecks } from '../components/HabitChecks';
+import { habitsForDate, useHabitChecks, useHabits } from '../data/habits';
 import { categoriesForDates } from '../data/categories';
 import { notesForDates, useSettings } from '../data/days';
 import { useSpheres } from '../data/spheres';
@@ -15,6 +17,8 @@ export function DayScreen({ date, onDateChange }: { date: string; onDateChange: 
   const sphereList = useSpheres();
   const spheres = useMemo(() => new Map(sphereList.map((s) => [s.id, s])), [sphereList]);
   const settings = useSettings();
+  const habits = useHabits();
+  const checks = useHabitChecks([date]);
   const today = todayISO();
 
   return (
@@ -46,6 +50,11 @@ export function DayScreen({ date, onDateChange }: { date: string; onDateChange: 
             <DayBoard date={date} tasks={tasks} categories={categories} spheres={spheres} untimedOnly />
             <p className="muted small hint-inline">Совет: напишите «10:00 Созвон» — задача сразу встанет на шкалу.</p>
           </article>
+          {habitsForDate(habits, date).length > 0 && (
+            <article className="day-card">
+              <HabitChecks date={date} habits={habits} checks={checks} />
+            </article>
+          )}
           <article className="day-card">
             <h3 className="card-title">Заметка</h3>
             <DayNoteField key={date} date={date} note={note} rows={4} />
