@@ -1,6 +1,15 @@
-import { createClient, type AuthError } from '@supabase/supabase-js';
+import { createClient, isAuthRetryableFetchError, type AuthError } from '@supabase/supabase-js';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../config';
-import { AuthRequiredError, type AuthUser, type Backend, type RemoteRow } from './backend';
+import { AuthRequiredError, isNetworkLike, NetworkError, type AuthUser, type Backend, type RemoteRow } from './backend';
+
+/** Сколько ждём ответа сервера. Без этого запрос в авиарежиме на iPhone может висеть бесконечно. */
+const REQUEST_TIMEOUT_MS = 15_000;
+
+const fetchWithTimeout: typeof fetch = (input, init = {}) => {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  const signal = init.signal && 'any' in AbortSignal ? AbortSignal.any([init.signal, timeout]) : (init.signal ?? timeout);
+  return fetch(input, { ...init, signal });
+};
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -9,6 +18,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     detectSessionInUrl: false,
     storageKey: 'planner.auth',
   },
+  global: { fetch: fetchWithTimeout },
 });
 
 function friendlyAuthError(e: AuthError): Error {
@@ -51,7 +61,9 @@ export const supabaseBackend: Backend = {
   },
 
   async hasSession() {
-    const { data } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
+    // Без сети вход не «пропал» — просто не удалось обновить его. Это не повод просить войти заново.
+    if (error && (isAuthRetryableFetchError(error) || isNetworkLike(error))) throw new NetworkError();
     return !!data.session;
   },
 
@@ -77,6 +89,7 @@ export const supabaseBackend: Backend = {
 };
 
 function toSyncError(e: { message: string; code?: string }): Error {
+  if (isNetworkLike(new Error(e.message))) return new NetworkError();
   if (e.code === 'PGRST301' || e.code === '42501' || /jwt/i.test(e.message)) return new AuthRequiredError();
   return new Error(e.message);
 }

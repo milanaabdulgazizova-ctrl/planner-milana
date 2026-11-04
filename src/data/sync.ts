@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { AuthRequiredError, type Backend, type RemoteRow } from './backend';
+import { AuthRequiredError, isNetworkLike, type Backend, type RemoteRow } from './backend';
 import { db, getMeta, setMeta, SYNCED, SYNCED_KINDS_SIGNATURE, type SyncFields } from './db';
 import { supabaseBackend } from './supabaseBackend';
 
@@ -92,14 +92,18 @@ async function pullAll() {
       const last = rows[rows.length - 1].server_updated_at!;
       since = last;
       if (!newest || last > newest) newest = last;
+      await setMeta('cursor', newest); // сохраняем после каждой порции, чтобы не начинать сначала
     }
     if (rows.length < PULL_PAGE) break;
   }
-  if (newest !== cursor) await setMeta('cursor', newest);
 }
 
 let running = false;
 let again = false;
+/** Номер текущей попытки: результат «зависшей» старой попытки игнорируем. */
+let generation = 0;
+/** Если синхронизация не закончилась за это время — считаем её зависшей и разрешаем новую. */
+const SYNC_WATCHDOG_MS = 45_000;
 
 export async function syncNow(): Promise<void> {
   if (running) {
@@ -110,21 +114,38 @@ export async function syncNow(): Promise<void> {
     setStatus({ state: 'offline' });
     return;
   }
+  const gen = ++generation;
   running = true;
   setStatus({ state: 'syncing', message: undefined });
+  let watchdog: ReturnType<typeof setTimeout> | undefined;
   try {
-    do {
-      again = false;
-      await pushAll();
-      await pullAll();
-    } while (again);
-    setStatus({ state: 'ok', lastOk: Date.now() });
+    const work = (async () => {
+      do {
+        again = false;
+        await pushAll();
+        await pullAll();
+      } while (again && gen === generation);
+    })();
+    const timeout = new Promise<never>((_, reject) => {
+      watchdog = setTimeout(() => reject(new DOMException('Сервер долго не отвечает', 'TimeoutError')), SYNC_WATCHDOG_MS);
+    });
+    await Promise.race([work, timeout]);
+    if (gen === generation) setStatus({ state: 'ok', lastOk: Date.now() });
   } catch (e) {
+    if (gen !== generation) return;
     if (e instanceof AuthRequiredError) setStatus({ state: 'auth', message: e.message });
-    else if (!navigator.onLine) setStatus({ state: 'offline' });
+    else if (!navigator.onLine || isNetworkLike(e)) setStatus({ state: 'offline', message: undefined });
     else setStatus({ state: 'error', message: e instanceof Error ? e.message : String(e) });
   } finally {
-    running = false;
+    clearTimeout(watchdog);
+    if (gen === generation) {
+      running = false;
+      // Пока шла попытка, что-то изменилось или вернулась сеть — пробуем ещё раз.
+      if (again) {
+        again = false;
+        requestSync(500);
+      }
+    }
   }
 }
 
@@ -145,7 +166,12 @@ export function startAutoSync() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') void syncNow();
   });
+  // Раз в минуту — обычная проверка; если связи не было или была ошибка — каждые 15 секунд.
+  let tick = 0;
   setInterval(() => {
-    if (document.visibilityState === 'visible') void syncNow();
-  }, 60_000);
+    if (document.visibilityState !== 'visible') return;
+    tick++;
+    const retrying = status.state === 'offline' || status.state === 'error';
+    if (retrying || tick % 4 === 0) void syncNow();
+  }, 15_000);
 }

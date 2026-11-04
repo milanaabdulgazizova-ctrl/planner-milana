@@ -36,3 +36,26 @@ export class AuthRequiredError extends Error {
     super('Нужно войти заново');
   }
 }
+
+/** Нет связи с сервером (авиарежим, плохая сеть, сервер не ответил вовремя). */
+export class NetworkError extends Error {
+  constructor(message = 'Нет связи с сервером') {
+    super(message);
+  }
+}
+
+/** Похожа ли ошибка на сетевую (браузеры пишут по-разному). */
+export function isNetworkLike(e: unknown): boolean {
+  if (e instanceof NetworkError) return true;
+  if (e instanceof DOMException && (e.name === 'AbortError' || e.name === 'TimeoutError')) return true;
+  const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
+  return (
+    e instanceof TypeError ||
+    msg.includes('failed to fetch') ||
+    msg.includes('load failed') ||
+    msg.includes('network') ||
+    msg.includes('timed out') ||
+    msg.includes('timeout') ||
+    msg.includes('aborted')
+  );
+}
