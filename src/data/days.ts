@@ -38,6 +38,10 @@ export const DEFAULT_SETTINGS: Omit<Settings, 'id' | 'updatedAt' | 'deleted' | '
   dayEndHour: 23,
   startScreen: 'week',
   bgColor: '#EDF1EA',
+  reviewTime: '21:00',
+  planningDay: 6,
+  lastReviewDate: '',
+  lastPlannedWeek: '',
 };
 
 export function useSettings() {
@@ -49,16 +53,17 @@ export function useSettings() {
   );
 }
 
+/** Только поля настроек (без служебных полей синхронизации). */
+function pickSettings(x: Record<string, unknown>): typeof DEFAULT_SETTINGS {
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(DEFAULT_SETTINGS)) out[k] = x[k] ?? (DEFAULT_SETTINGS as Record<string, unknown>)[k];
+  return out as typeof DEFAULT_SETTINGS;
+}
+
 export async function updateSettings(patch: Partial<typeof DEFAULT_SETTINGS>) {
   const r = await db.settings.get(SETTINGS_ID);
   const cur = { ...DEFAULT_SETTINGS, ...(r ?? {}) };
-  const next = {
-    dayStartHour: cur.dayStartHour,
-    dayEndHour: cur.dayEndHour,
-    startScreen: cur.startScreen,
-    bgColor: cur.bgColor,
-    ...patch,
-  };
+  const next = { ...pickSettings(cur), ...patch };
   if (patch.startScreen) localStorage.setItem('planner.startScreen', patch.startScreen);
   await putRecord(db.settings, SETTINGS_ID, next);
 }

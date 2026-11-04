@@ -360,3 +360,50 @@ h3 { font-family: var(--font-head); font-style: italic; font-weight: 500; font-s
 .habit-add form { display: grid; gap: 8px; }
 .habit-add input { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px; font-size: 16px; outline: none; }
 .habit-add .primary { margin-top: 4px; }
+
+/* ---------- баннеры ---------- */
+.banners { display: grid; gap: 8px; margin-bottom: 12px; }
+.banner {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--today); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: var(--radius);
+  padding: 12px 14px; font-size: 15px;
+}
+.banner-go { color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+/* ---------- большие окна: разбор, планирование ---------- */
+.sheet.big { max-width: 720px; }
+@media (min-width: 900px) { .sheet.big { max-height: 88dvh; } }
+.sheet.big > h2 { margin-bottom: 8px; }
+.review-list, .dist-list { list-style: none; margin: 12px 0 0; padding: 0; }
+.review-item { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.review-title { display: flex; align-items: baseline; gap: 8px; }
+.review-title .sphere-dot { margin-top: 0; align-self: center; }
+.review-title > span:nth-child(2), .review-title > span:first-child:not(.sphere-dot) { flex: 1; }
+.review-date { margin-left: auto; white-space: nowrap; }
+.review-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip.danger { color: var(--danger); }
+.review-empty { font-family: var(--font-head); font-style: italic; font-size: 24px; text-align: center; padding: 32px 0; }
+.steps { display: flex; gap: 6px; margin: 4px 0 12px; flex-wrap: wrap; }
+.step { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px 4px 4px; font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.step span { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--soft); font-size: 12px; }
+.step.on { color: var(--text); border-color: var(--accent); }
+.step.on span { background: var(--accent); color: #fff; }
+.step.past span { background: color-mix(in srgb, var(--accent) 35%, var(--surface)); }
+.plan-step h3 { margin: 4px 0 8px; }
+.plan-step .focus-card { border: 0; padding: 0; background: none; }
+.plan-step .focus-card h3 { display: none; }
+.plan-block { margin-top: 14px; }
+.big-number { font-family: var(--font-head); font-style: italic; font-size: 40px; margin: 0; line-height: 1.1; }
+.big-number .muted { font-family: var(--font-text); font-style: normal; font-size: 15px; }
+.plain-goals { margin: 0; padding-left: 20px; }
+.bar-row { display: grid; grid-template-columns: minmax(90px, 160px) 1fr auto; gap: 10px; align-items: center; padding: 4px 0; font-size: 14px; }
+.bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar { height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+.bar span { display: block; height: 100%; border-radius: 4px; }
+.week-counts { display: flex; gap: 6px; flex-wrap: wrap; }
+.wc { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; }
+.wc.has { color: var(--text); background: var(--soft); }
+.dist-item { border-bottom: 1px solid var(--line); padding: 8px 0; display: grid; gap: 6px; }
+.dist-days { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.dist-days .wd { min-width: 48px; height: 30px; padding: 0 6px; }
+.small-chip { font-size: 12px; padding: 3px 10px; }

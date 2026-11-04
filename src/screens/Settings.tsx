@@ -1,6 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { SpheresEditor } from '../components/SpheresEditor';
+import { openOverlay } from '../components/uiStore';
+import { planningTargetWeek } from '../data/review';
+import { WEEKDAYS_SHORT } from '../lib/repeat';
+import { startOfWeek, todayISO } from '../lib/dates';
 import { SYNC_LABELS } from '../components/SyncBadge';
 import { APP_VERSION } from '../config';
 import { SYNCED } from '../data/db';
@@ -111,6 +115,40 @@ export function SettingsScreen() {
               ))}
             </select>
           </span>
+        </div>
+      </article>
+
+      <article className="day-card wide settings">
+        <h3 className="card-title">Разбор и планирование</h3>
+        <div className="row">
+          <span>Вечерний разбор с</span>
+          <input type="time" className="date-picker" value={settings.reviewTime} onChange={(e) => e.target.value && void updateSettings({ reviewTime: e.target.value })} aria-label="Время вечернего разбора" />
+        </div>
+        <div className="row">
+          <span>День планирования недели</span>
+          <span className="weekday-toggles">
+            {WEEKDAYS_SHORT.map((w, i) => (
+              <button key={w} className={'wd' + (settings.planningDay === i ? ' on' : '')} onClick={() => void updateSettings({ planningDay: i })}>
+                {w}
+              </button>
+            ))}
+          </span>
+        </div>
+        <p className="muted small">В это время на экранах «Неделя» и «День» появится мягкое напоминание. Ничего не переносится само.</p>
+        <div className="buttons">
+          <button className="secondary" onClick={() => openOverlay({ kind: 'review' })}>
+            Провести разбор сейчас
+          </button>
+          <button
+            className="secondary"
+            onClick={() => {
+              const today = todayISO();
+              const target = planningTargetWeek(settings.planningDay, today);
+              openOverlay({ kind: 'planning', weekStart: target < startOfWeek(today) ? startOfWeek(today) : target });
+            }}
+          >
+            Спланировать неделю
+          </button>
         </div>
       </article>
 

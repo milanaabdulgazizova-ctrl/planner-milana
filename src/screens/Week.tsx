@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { DayBoard, DayNoteField } from '../components/DayBoard';
 import { TaskGroup } from '../components/TaskGroup';
 import { WeekFocus } from '../components/WeekFocus';
+import { openOverlay } from '../components/uiStore';
 import { HabitChecks } from '../components/HabitChecks';
 import { useHabitChecks, useHabits } from '../data/habits';
 import { categoriesForDates } from '../data/categories';
@@ -35,6 +36,9 @@ export function WeekScreen({ onOpenDay }: { onOpenDay: (date: string) => void })
       <div className="screen-head">
         <h2>{formatWeekRange(weekStart)}</h2>
         <div className="pager">
+          <button className="chip" onClick={() => openOverlay({ kind: 'planning', weekStart })}>
+            Спланировать
+          </button>
           <button className="icon-btn" aria-label="Предыдущая неделя" onClick={() => setWeekStart(addDays(weekStart, -7))}>
             ‹
           </button>

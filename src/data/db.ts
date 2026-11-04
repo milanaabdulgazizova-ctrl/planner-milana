@@ -91,6 +91,13 @@ export interface Settings extends SyncFields {
   startScreen: 'week' | 'day';
   /** Цвет фона приложения. */
   bgColor: string;
+  /** Время вечернего разбора «HH:MM». */
+  reviewTime: string;
+  /** День планирования недели: 0 = пн … 6 = вс. */
+  planningDay: number;
+  /** Дата последнего вечернего разбора и неделя (понедельник), которую последний раз планировали. */
+  lastReviewDate: string;
+  lastPlannedWeek: string;
 }
 
 export interface Meta {

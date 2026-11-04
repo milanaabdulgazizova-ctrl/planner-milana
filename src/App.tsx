@@ -8,6 +8,10 @@ import { HabitsScreen } from './screens/Habits';
 import { SyncBadge } from './components/SyncBadge';
 import { PlannerDnd } from './components/dnd';
 import { TaskEditor } from './components/TaskEditor';
+import { ReviewSheet } from './components/ReviewSheet';
+import { PlanningWizard } from './components/PlanningWizard';
+import { DueBanners } from './components/DueBanners';
+import { useOverlay } from './components/uiStore';
 import { TaskRowView } from './components/TaskRow';
 import { ensureDefaultSpheres } from './data/spheres';
 import { applyBgColor, useSettings } from './data/days';
@@ -32,6 +36,7 @@ export function App() {
   const [dayDate, setDayDate] = useState(todayISO);
 
   const settings = useSettings();
+  const overlay = useOverlay();
   useEffect(() => applyBgColor(settings.bgColor), [settings.bgColor]);
 
   useEffect(() => {
@@ -63,6 +68,7 @@ export function App() {
 
       <PlannerDnd renderOverlay={(t) => <TaskRowView task={t} dragging />}>
         <main className="content">
+          {(tab === 'week' || tab === 'day') && <DueBanners />}
           {tab === 'week' && <WeekScreen onOpenDay={openDay} />}
           {tab === 'day' && <DayScreen date={dayDate} onDateChange={setDayDate} />}
           {tab === 'someday' && <SomedayScreen />}
@@ -71,6 +77,8 @@ export function App() {
         </main>
       </PlannerDnd>
       <TaskEditor />
+      {overlay?.kind === 'review' && <ReviewSheet />}
+      {overlay?.kind === 'planning' && <PlanningWizard weekStart={overlay.weekStart} />}
 
       <nav className="tabbar">
         {TABS.map((t) => (
