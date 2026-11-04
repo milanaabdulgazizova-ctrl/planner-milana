@@ -9,8 +9,21 @@ import './styles.css';
 import { App } from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Офлайн-режим и автообновление приложения.
-registerSW({ immediate: true });
+// Офлайн-режим и автообновление приложения:
+// проверяем, нет ли новой версии, при каждом возвращении в приложение и раз в 30 минут.
+registerSW({
+  immediate: true,
+  onRegisteredSW(_url, registration) {
+    if (!registration) return;
+    const check = () => {
+      if (navigator.onLine) void registration.update().catch(() => {});
+    };
+    setInterval(check, 30 * 60_000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') check();
+    });
+  },
+});
 
 // Просим браузер не удалять локальные данные при нехватке места.
 void navigator.storage?.persist?.();

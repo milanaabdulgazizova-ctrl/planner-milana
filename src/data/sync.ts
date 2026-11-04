@@ -161,17 +161,15 @@ export function startAutoSync() {
   if (started) return;
   started = true;
   void syncNow();
+  const onBack = () => {
+    if (document.visibilityState === 'visible') void syncNow();
+  };
   window.addEventListener('online', () => void syncNow());
   window.addEventListener('offline', () => setStatus({ state: 'offline' }));
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') void syncNow();
-  });
-  // Раз в минуту — обычная проверка; если связи не было или была ошибка — каждые 15 секунд.
-  let tick = 0;
-  setInterval(() => {
-    if (document.visibilityState !== 'visible') return;
-    tick++;
-    const retrying = status.state === 'offline' || status.state === 'error';
-    if (retrying || tick % 4 === 0) void syncNow();
-  }, 15_000);
+  // Вернулись в приложение / на вкладку — сразу проверяем, нет ли нового.
+  document.addEventListener('visibilitychange', onBack);
+  window.addEventListener('focus', onBack);
+  window.addEventListener('pageshow', onBack);
+  // Пока приложение открыто — проверяем новое каждые 15 секунд.
+  setInterval(onBack, 15_000);
 }
