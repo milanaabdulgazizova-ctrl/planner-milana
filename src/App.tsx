@@ -9,6 +9,7 @@ import { PlannerDnd } from './components/dnd';
 import { TaskEditor } from './components/TaskEditor';
 import { TaskRowView } from './components/TaskRow';
 import { ensureDefaultSpheres } from './data/spheres';
+import { applyBgColor, useSettings } from './data/days';
 import { useUser } from './data/session';
 import { startAutoSync } from './data/sync';
 import { todayISO } from './lib/dates';
@@ -27,6 +28,9 @@ export function App() {
   // Стартовый экран из настроек (копия хранится локально, чтобы не мигало при запуске).
   const [tab, setTab] = useState<Tab>(() => (localStorage.getItem('planner.startScreen') as Tab) || 'week');
   const [dayDate, setDayDate] = useState(todayISO);
+
+  const settings = useSettings();
+  useEffect(() => applyBgColor(settings.bgColor), [settings.bgColor]);
 
   useEffect(() => {
     if (!user) return;

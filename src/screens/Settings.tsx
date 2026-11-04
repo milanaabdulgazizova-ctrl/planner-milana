@@ -1,12 +1,30 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SpheresEditor } from '../components/SpheresEditor';
 import { SYNC_LABELS } from '../components/SyncBadge';
 import { APP_VERSION } from '../config';
 import { SYNCED } from '../data/db';
-import { updateSettings, useSettings } from '../data/days';
+import { applyBgColor, BG_COLORS, updateSettings, useSettings } from '../data/days';
 import { relogin, signOut, useUser } from '../data/session';
 import { syncNow, useSyncStatus } from '../data/sync';
+
+/** «Свой цвет»: палитра браузера. Цвет меняется сразу, сохраняется с небольшой задержкой. */
+function CustomBgSwatch({ value, active }: { value: string; active: boolean }) {
+  const [color, setColor] = useState(value);
+  useEffect(() => setColor(value), [value]);
+  useEffect(() => {
+    if (color.toLowerCase() === value.toLowerCase()) return;
+    applyBgColor(color);
+    const t = setTimeout(() => void updateSettings({ bgColor: color }), 400);
+    return () => clearTimeout(t);
+  }, [color, value]);
+  return (
+    <label className={'swatch custom' + (active ? ' on' : '')} style={{ background: color }} title="Свой цвет">
+      <span aria-hidden="true">+</span>
+      <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Свой цвет фона" />
+    </label>
+  );
+}
 
 const HOURS = Array.from({ length: 25 }, (_, i) => i);
 
@@ -46,6 +64,22 @@ export function SettingsScreen() {
 
       <article className="day-card wide settings">
         <h3 className="card-title">Вид</h3>
+        <div className="row bg-row">
+          <span>Цвет фона</span>
+          <span className="color-picker">
+            {BG_COLORS.map(([c, name]) => (
+              <button
+                key={c}
+                className={'swatch' + (settings.bgColor.toLowerCase() === c.toLowerCase() ? ' on' : '')}
+                style={{ background: c }}
+                title={name}
+                aria-label={name}
+                onClick={() => void updateSettings({ bgColor: c })}
+              />
+            ))}
+            <CustomBgSwatch value={settings.bgColor} active={!BG_COLORS.some(([c]) => c.toLowerCase() === settings.bgColor.toLowerCase())} />
+          </span>
+        </div>
         <div className="row">
           <span>Стартовый экран</span>
           <span className="chips">

@@ -8,6 +8,10 @@ import '@fontsource/cormorant-garamond/500-italic.css';
 import './styles.css';
 import { App } from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { applyBgColor } from './data/days';
+
+// Цвет фона, выбранный в прошлый раз, — сразу, до загрузки базы.
+applyBgColor(localStorage.getItem('planner.bg') ?? '#EDF1EA');
 
 // Офлайн-режим и автообновление приложения:
 // проверяем, нет ли новой версии, при каждом возвращении в приложение и раз в 30 минут.

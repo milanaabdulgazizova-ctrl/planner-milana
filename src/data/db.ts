@@ -63,6 +63,8 @@ export interface Settings extends SyncFields {
   dayStartHour: number;
   dayEndHour: number;
   startScreen: 'week' | 'day';
+  /** Цвет фона приложения. */
+  bgColor: string;
 }
 
 export interface Meta {

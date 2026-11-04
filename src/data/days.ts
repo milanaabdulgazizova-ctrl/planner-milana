@@ -37,6 +37,7 @@ export const DEFAULT_SETTINGS: Omit<Settings, 'id' | 'updatedAt' | 'deleted' | '
   dayStartHour: 7,
   dayEndHour: 23,
   startScreen: 'week',
+  bgColor: '#EDF1EA',
 };
 
 export function useSettings() {
@@ -51,7 +52,38 @@ export function useSettings() {
 export async function updateSettings(patch: Partial<typeof DEFAULT_SETTINGS>) {
   const r = await db.settings.get(SETTINGS_ID);
   const cur = { ...DEFAULT_SETTINGS, ...(r ?? {}) };
-  const next = { dayStartHour: cur.dayStartHour, dayEndHour: cur.dayEndHour, startScreen: cur.startScreen, ...patch };
+  const next = {
+    dayStartHour: cur.dayStartHour,
+    dayEndHour: cur.dayEndHour,
+    startScreen: cur.startScreen,
+    bgColor: cur.bgColor,
+    ...patch,
+  };
   if (patch.startScreen) localStorage.setItem('planner.startScreen', patch.startScreen);
   await putRecord(db.settings, SETTINGS_ID, next);
+}
+
+// ---------- цвет фона ----------
+
+export const BG_COLORS: [string, string][] = [
+  ['#EDF1EA', 'Шалфей'],
+  ['#F4F1EA', 'Молочный'],
+  ['#F3E9E7', 'Пудровый'],
+  ['#ECEAF3', 'Лавандовый'],
+  ['#E8EFF3', 'Голубой'],
+  ['#F2EDE2', 'Песочный'],
+  ['#E6F0EC', 'Мятный'],
+  ['#EEEEEC', 'Светло-серый'],
+];
+
+/** Применить цвет фона (и запомнить локально, чтобы при запуске не мигал старый цвет). */
+export function applyBgColor(color: string) {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+  document.documentElement.style.setProperty('--bg', color);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+  try {
+    localStorage.setItem('planner.bg', color);
+  } catch {
+    /* не страшно */
+  }
 }
