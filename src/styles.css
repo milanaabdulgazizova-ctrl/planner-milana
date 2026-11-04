@@ -182,3 +182,5 @@ h2 { font-size: 28px; line-height: 1.15; }
 /* ---------- настройки ---------- */
 .settings .row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .settings .buttons { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; }
+
+.error-text { white-space: pre-wrap; font-size: 11px; background: var(--bg); border-radius: 10px; padding: 10px; max-height: 40vh; overflow: auto; }

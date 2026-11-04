@@ -7,6 +7,7 @@ import '@fontsource/manrope/600.css';
 import '@fontsource/cormorant-garamond/500-italic.css';
 import './styles.css';
 import { App } from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Офлайн-режим и автообновление приложения.
 registerSW({ immediate: true });
@@ -16,6 +17,8 @@ void navigator.storage?.persist?.();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

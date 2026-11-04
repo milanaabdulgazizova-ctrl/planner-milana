@@ -14,6 +14,16 @@
   </head>
   <body>
     <div id="root"></div>
+    <noscript>Для работы планера нужен JavaScript.</noscript>
+    <script>
+      // Если приложение не запустилось за 8 секунд — показываем подсказку вместо белой страницы.
+      setTimeout(function () {
+        var r = document.getElementById('root');
+        if (r && !r.children.length) {
+          r.innerHTML = '<p style="font:16px system-ui;padding:24px;color:#2F3A33">Планер не загрузился. Обновите страницу. Если не поможет — пришлите скриншот.</p>';
+        }
+      }, 8000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
