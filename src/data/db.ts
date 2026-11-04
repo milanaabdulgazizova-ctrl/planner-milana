@@ -19,8 +19,50 @@ export interface Task extends SyncFields {
   /** YYYY-MM-DD или null для «Когда-нибудь». */
   date: string | null;
   done: boolean;
+  /** Порядок внутри списка (для задач без времени). */
   order: number;
   createdAt: number;
+  /** Время начала/конца «HH:MM», необязательно. */
+  start?: string | null;
+  end?: string | null;
+  /** Сфера жизни (цветная метка). */
+  sphereId?: string | null;
+  /** Категория внутри дня. */
+  categoryId?: string | null;
+  note?: string;
+}
+
+/** Сфера жизни: работа, учёба… — цветная метка задачи. */
+export interface Sphere extends SyncFields {
+  name: string;
+  color: string;
+  order: number;
+}
+
+/** Категория внутри конкретного дня (у каждого дня свой набор). */
+export interface DayCategory extends SyncFields {
+  date: string;
+  name: string;
+  order: number;
+}
+
+/** Заметка дня. id = uuidFrom('day-note:' + date). */
+export interface DayNote extends SyncFields {
+  date: string;
+  text: string;
+}
+
+/** Фокус недели. id = uuidFrom('week-focus:' + weekStart). */
+export interface WeekFocus extends SyncFields {
+  weekStart: string;
+  goals: string[];
+}
+
+/** Настройки, общие для всех устройств. Одна запись, id = uuidFrom('settings'). */
+export interface Settings extends SyncFields {
+  dayStartHour: number;
+  dayEndHour: number;
+  startScreen: 'week' | 'day';
 }
 
 export interface Meta {
@@ -30,12 +72,26 @@ export interface Meta {
 
 class PlannerDB extends Dexie {
   tasks!: Table<Task, string>;
+  spheres!: Table<Sphere, string>;
+  categories!: Table<DayCategory, string>;
+  dayNotes!: Table<DayNote, string>;
+  weekFocus!: Table<WeekFocus, string>;
+  settings!: Table<Settings, string>;
   meta!: Table<Meta, string>;
 
   constructor() {
     super('planner');
     this.version(1).stores({
       tasks: 'id, date, dirty',
+      meta: 'key',
+    });
+    this.version(2).stores({
+      tasks: 'id, date, dirty',
+      spheres: 'id, dirty',
+      categories: 'id, date, dirty',
+      dayNotes: 'id, date, dirty',
+      weekFocus: 'id, weekStart, dirty',
+      settings: 'id, dirty',
       meta: 'key',
     });
   }
@@ -50,6 +106,11 @@ export const db = new PlannerDB();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SYNCED: Record<string, Table<any, string>> = {
   task: db.tasks,
+  sphere: db.spheres,
+  category: db.categories,
+  dayNote: db.dayNotes,
+  weekFocus: db.weekFocus,
+  settings: db.settings,
 };
 
 /** Меняется при добавлении новых видов записей — тогда скачиваем всё из облака заново. */

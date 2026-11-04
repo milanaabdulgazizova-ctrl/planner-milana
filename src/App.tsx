@@ -5,6 +5,10 @@ import { DayScreen } from './screens/Day';
 import { SomedayScreen } from './screens/Someday';
 import { SettingsScreen } from './screens/Settings';
 import { SyncBadge } from './components/SyncBadge';
+import { PlannerDnd } from './components/dnd';
+import { TaskEditor } from './components/TaskEditor';
+import { TaskRowView } from './components/TaskRow';
+import { ensureDefaultSpheres } from './data/spheres';
 import { useUser } from './data/session';
 import { startAutoSync } from './data/sync';
 import { todayISO } from './lib/dates';
@@ -20,16 +24,15 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 export function App() {
   const user = useUser();
-  const [tab, setTab] = useState<Tab>(() => (localStorage.getItem('planner.tab') as Tab) || 'week');
+  // Стартовый экран из настроек (копия хранится локально, чтобы не мигало при запуске).
+  const [tab, setTab] = useState<Tab>(() => (localStorage.getItem('planner.startScreen') as Tab) || 'week');
   const [dayDate, setDayDate] = useState(todayISO);
 
   useEffect(() => {
-    if (user) startAutoSync();
+    if (!user) return;
+    void ensureDefaultSpheres();
+    startAutoSync();
   }, [user]);
-
-  useEffect(() => {
-    localStorage.setItem('planner.tab', tab);
-  }, [tab]);
 
   if (!user) return <Login />;
 
@@ -52,12 +55,15 @@ export function App() {
         <SyncBadge />
       </header>
 
-      <main className="content">
-        {tab === 'week' && <WeekScreen onOpenDay={openDay} />}
-        {tab === 'day' && <DayScreen date={dayDate} onDateChange={setDayDate} />}
-        {tab === 'someday' && <SomedayScreen />}
-        {tab === 'settings' && <SettingsScreen />}
-      </main>
+      <PlannerDnd renderOverlay={(t) => <TaskRowView task={t} dragging />}>
+        <main className="content">
+          {tab === 'week' && <WeekScreen onOpenDay={openDay} />}
+          {tab === 'day' && <DayScreen date={dayDate} onDateChange={setDayDate} />}
+          {tab === 'someday' && <SomedayScreen />}
+          {tab === 'settings' && <SettingsScreen />}
+        </main>
+      </PlannerDnd>
+      <TaskEditor />
 
       <nav className="tabbar">
         {TABS.map((t) => (

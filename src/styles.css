@@ -134,13 +134,30 @@ h2 { font-size: 28px; line-height: 1.15; }
 
 /* ---------- задачи ---------- */
 .tasks { list-style: none; margin: 0; padding: 0; }
-.task { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-.task:last-child { border-bottom: 0; }
-.task-title { flex: 1; min-width: 0; overflow-wrap: break-word; hyphens: auto; padding-top: 1px; cursor: text; transition: color 0.2s; }
+.task-item {
+  border-bottom: 1px solid var(--line); cursor: pointer; touch-action: manipulation;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; position: relative;
+}
+.task-item:last-child { border-bottom: 0; }
+.task-item.dragging { opacity: 0.35; }
+.task-item.drop-before::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -2px; height: 3px; border-radius: 3px; background: var(--accent);
+}
+.task { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; }
+.task.overlay {
+  background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 8px 10px;
+  box-shadow: 0 8px 24px rgb(47 58 51 / 0.12); cursor: grabbing; max-width: 320px;
+}
+.task-body { flex: 1; min-width: 0; padding-top: 1px; overflow-wrap: break-word; hyphens: auto; }
+.task-time { font-size: 12px; font-weight: 600; color: var(--accent); margin-right: 6px; font-variant-numeric: tabular-nums; }
+.task-title { transition: color 0.2s; }
+.task-note-mark { color: var(--muted); font-size: 12px; margin-left: 6px; }
 .task.done .task-title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
-.task .icon-btn { min-width: 24px; height: 24px; opacity: 0.45; }
-.task:hover .icon-btn { opacity: 1; }
-.task-edit { flex: 1; min-width: 0; border: 0; border-bottom: 1px solid var(--accent); background: none; outline: none; padding: 0; }
+.task.done .task-time { color: var(--muted); }
+.sphere-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--sphere, var(--line)); margin-top: 8px; }
+.task .sphere-dot { margin-left: 2px; }
+.task-group { border-radius: 10px; transition: background 0.15s; margin: 0 -6px; padding: 0 6px; }
+.task-group.over { background: var(--soft); }
 
 .check {
   flex: none; width: 20px; height: 20px; margin-top: 2px; padding: 0;
@@ -184,3 +201,119 @@ h2 { font-size: 28px; line-height: 1.15; }
 .settings .buttons { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; }
 
 .error-text { white-space: pre-wrap; font-size: 11px; background: var(--bg); border-radius: 10px; padding: 10px; max-height: 40vh; overflow: auto; }
+
+/* ---------- категории дня ---------- */
+.category { margin-top: 10px; }
+.cat-head { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+.cat-name {
+  border: 0; background: none; padding: 2px 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted); text-align: left; flex: 1;
+}
+.cat-input { flex: 1; border: 0; border-bottom: 1px solid var(--accent); background: none; outline: none; font-size: 13px; font-weight: 600; padding: 2px 0; }
+.icon-btn.small { min-width: 24px; height: 24px; opacity: 0.5; }
+.icon-btn.small:hover { opacity: 1; }
+.add-cat { border: 0; background: none; color: var(--muted); font-size: 13px; padding: 8px 0 2px; }
+.add-cat:hover { color: var(--accent); }
+.add-cat-form input { width: 100%; border: 0; border-bottom: 1px solid var(--accent); background: none; outline: none; padding: 6px 0; font-size: 16px; }
+.day-note {
+  width: 100%; margin-top: 8px; border: 0; border-top: 1px dashed var(--line); background: none; outline: none; resize: vertical;
+  padding: 8px 0 4px; font: inherit; font-size: 13px; color: var(--text); min-height: 32px;
+}
+.day-note::placeholder { color: var(--muted); opacity: 0.7; }
+.day-link { border: 0; background: none; padding: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%; text-align: left; }
+.day-head { cursor: default; }
+@media (min-width: 1100px) { .week-grid .day-link { flex-direction: column; align-items: flex-start; gap: 0; } }
+
+/* ---------- верх недели: фокус и «когда-нибудь» ---------- */
+h3 { font-family: var(--font-head); font-style: italic; font-weight: 500; font-size: 22px; margin: 0; }
+.week-top { display: grid; gap: 12px; margin-bottom: 12px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .week-top { grid-template-columns: 2fr 1fr; align-items: start; } }
+.focus-card, .someday-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+.focus-goals { margin: 6px 0 0; padding-left: 22px; color: var(--muted); }
+.focus-goals li { padding: 2px 0; }
+.focus-goals input { width: 100%; border: 0; border-bottom: 1px solid transparent; background: none; outline: none; padding: 4px 0; color: var(--text); font-size: 16px; }
+.focus-goals input:focus { border-bottom-color: var(--accent); }
+.focus-goals input::placeholder { color: var(--muted); opacity: 0.6; }
+@media (min-width: 900px) { .focus-goals input { font-size: 15px; } }
+.someday-toggle { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 0; text-align: left; }
+.someday-toggle .chev { margin-left: auto; color: var(--muted); font-size: 20px; transition: transform 0.2s; }
+.someday-card.open .chev { transform: rotate(90deg); }
+.hint-inline { margin: 6px 0 4px; }
+
+/* ---------- окно задачи ---------- */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 50; background: rgb(47 58 51 / 0.25);
+  display: flex; align-items: flex-end; justify-content: center; animation: fade 0.15s ease;
+}
+.sheet {
+  width: 100%; max-width: 560px; max-height: 92dvh; overflow: auto; background: var(--surface);
+  border-radius: 20px 20px 0 0; padding: 8px 18px calc(18px + var(--safe-bottom)); animation: rise 0.2s ease;
+}
+@media (min-width: 900px) {
+  .sheet-backdrop { align-items: center; }
+  .sheet { border-radius: 20px; padding-bottom: 18px; }
+}
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { transform: translateY(24px); opacity: 0.6; } }
+.sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 4px auto 12px; }
+.sheet-title {
+  width: 100%; border: 0; background: none; outline: none; resize: none; font-family: var(--font-head); font-style: italic;
+  font-size: 26px; line-height: 1.2; padding: 0 0 6px; border-bottom: 1px solid var(--line); field-sizing: content;
+}
+.field { padding: 12px 0 0; }
+.field-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; }
+.field-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.field-row input, select {
+  border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 7px 10px; font: inherit; font-size: 16px; color: var(--text);
+}
+.field-row input:disabled { opacity: 0.5; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sphere-chip { display: inline-flex; align-items: center; gap: 6px; }
+.sphere-chip .sphere-dot { margin: 0; }
+.sphere-chip.on { background: color-mix(in srgb, var(--sphere) 35%, var(--surface)); border-color: var(--sphere); color: var(--text); }
+.sheet-note { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 10px; font: inherit; font-size: 16px; resize: vertical; outline: none; }
+.sheet-note:focus { border-color: var(--accent); }
+.sheet-actions {
+  display: flex; gap: 10px; margin-top: 18px; align-items: center;
+  position: sticky; bottom: calc(-18px - var(--safe-bottom)); background: var(--surface);
+  padding: 10px 0 calc(10px + var(--safe-bottom)); border-top: 1px solid var(--line);
+}
+.sheet-actions .primary { margin: 0; flex: 1; }
+
+/* ---------- вид «День» ---------- */
+.day-layout { display: grid; gap: 12px; grid-template-columns: 1fr; max-width: 1100px; }
+@media (min-width: 900px) { .day-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.day-col { display: grid; gap: 12px; }
+.card-title { margin-bottom: 6px; }
+.day-screen .day-card { min-height: 0; }
+.timeline-card { padding-bottom: 14px; }
+.timeline { position: relative; margin-top: 8px; }
+.tl-hour { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+.tl-hour span { position: absolute; top: -9px; left: 0; background: var(--surface); padding-right: 6px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.today .tl-hour span { background: var(--today); }
+.tl-now { position: absolute; left: 44px; right: 0; height: 2px; background: var(--danger); z-index: 2; }
+.tl-now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+.tl-events { position: absolute; left: 48px; right: 0; top: 0; bottom: 0; }
+.tl-event {
+  position: absolute; overflow: hidden; text-align: left; font-size: 13px; line-height: 1.3; padding: 3px 8px;
+  border: 0; border-left: 3px solid var(--sphere); border-radius: 8px;
+  background: color-mix(in srgb, var(--sphere) 28%, var(--surface)); color: var(--text);
+}
+.tl-event.done { opacity: 0.55; text-decoration: line-through; }
+.tl-time { font-size: 11px; font-weight: 600; color: var(--muted); }
+
+/* ---------- настройки: сферы ---------- */
+.settings-screen .day-card { margin-bottom: 12px; }
+.sphere-list { list-style: none; margin: 8px 0; padding: 0; }
+.sphere-row { border-bottom: 1px solid var(--line); padding: 6px 0; }
+.sphere-row-main { display: flex; align-items: center; gap: 10px; }
+.sphere-row input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-size: 16px; padding: 4px 0; }
+.color-picker { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); padding: 0; }
+.swatch.on { box-shadow: 0 0 0 2px var(--accent); }
+.swatch.big { width: 22px; height: 22px; flex: none; }
+.sphere-add { display: grid; gap: 4px; margin-top: 8px; }
+.sphere-add input { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 8px 10px; font-size: 16px; outline: none; }
+.sphere-add .secondary { justify-self: start; }
+.settings .row { align-items: center; }

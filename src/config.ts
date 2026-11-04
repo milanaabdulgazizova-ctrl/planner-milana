@@ -4,4 +4,4 @@
 // Секретный ключ (secret / service_role) сюда класть НЕЛЬЗЯ.
 export const SUPABASE_URL = 'https://sgsidgcfauvagtepngah.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_gLF-A7RgQTdBvZ0yjlAHtA_pGAEoCSG';
-export const APP_VERSION = '0.1.2';
+export const APP_VERSION = '0.2.0';

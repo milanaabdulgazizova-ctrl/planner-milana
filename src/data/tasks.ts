@@ -1,52 +1,83 @@
 import { db, type Task } from './db';
-import { requestSync } from './sync';
+import { alive, patchRecord, putRecord, removeRecord, stamp } from './records';
 
-let lastStamp = 0;
-/** Время изменения; строго растёт, даже если две правки в одну миллисекунду. */
-export function stamp(): number {
-  lastStamp = Math.max(Date.now(), lastStamp + 1);
-  return lastStamp;
+export { stamp };
+
+/** Разобрать быстрый ввод: «10:00 Созвон» или «10:00-11:30 Созвон» → время + название. */
+export function parseQuickTitle(input: string): { title: string; start: string | null; end: string | null } {
+  const m = input.trim().match(/^(\d{1,2})[:.](\d{2})(?:\s*[-–—]\s*(\d{1,2})[:.](\d{2}))?\s+(.+)$/);
+  if (!m) return { title: input.trim(), start: null, end: null };
+  const hm = (h: string, mm: string) => (Number(h) < 24 && Number(mm) < 60 ? `${h.padStart(2, '0')}:${mm}` : null);
+  const start = hm(m[1], m[2]);
+  if (!start) return { title: input.trim(), start: null, end: null };
+  const end = m[3] ? hm(m[3], m[4]) : null;
+  return { title: m[5].trim(), start, end };
 }
 
-export async function addTask(title: string, date: string | null): Promise<void> {
-  const t = title.trim();
-  if (!t) return;
+export async function addTask(input: string, date: string | null, categoryId: string | null = null): Promise<void> {
+  const { title, start, end } = parseQuickTitle(input);
+  if (!title) return;
   const now = stamp();
-  await db.tasks.add({
-    id: crypto.randomUUID(),
-    title: t,
+  await putRecord(db.tasks, crypto.randomUUID(), {
+    title,
     date,
     done: false,
     order: now,
     createdAt: now,
-    updatedAt: now,
-    deleted: 0,
-    dirty: 1,
+    start,
+    end,
+    sphereId: null,
+    categoryId,
+    note: '',
   });
-  requestSync();
 }
 
 export async function updateTask(id: string, patch: Partial<Omit<Task, 'id' | 'updatedAt' | 'dirty'>>) {
-  await db.tasks.update(id, { ...patch, updatedAt: stamp(), dirty: 1 });
-  requestSync();
+  await patchRecord(db.tasks, id, patch);
 }
 
 export async function deleteTask(id: string) {
-  await updateTask(id, { deleted: 1 });
+  await removeRecord(db.tasks, id);
 }
 
-function sortTasks(list: Task[]) {
-  return list.sort((a, b) => a.order - b.order);
+/** Сравнение для показа: сначала без времени (по порядку), потом со временем (по времени). */
+export function compareTasks(a: Task, b: Task): number {
+  if (!a.start !== !b.start) return a.start ? 1 : -1;
+  if (a.start && b.start && a.start !== b.start) return a.start < b.start ? -1 : 1;
+  return a.order - b.order;
 }
 
-export async function tasksForDate(date: string): Promise<Task[]> {
-  return sortTasks((await db.tasks.where('date').equals(date).toArray()).filter((t) => !t.deleted));
+/**
+ * Переместить задачу (перетаскиванием): в другой день / категорию / «Когда-нибудь».
+ * beforeId — задача, перед которой поставить; без него — в конец списка.
+ */
+export async function moveTask(id: string, date: string | null, categoryId: string | null, beforeId?: string) {
+  const task = await db.tasks.get(id);
+  if (!task) return;
+  let order = stamp();
+  if (beforeId && beforeId !== id) {
+    const group = alive(await groupTasks(date, categoryId))
+      .filter((t) => t.id !== id && !t.start)
+      .sort((a, b) => a.order - b.order);
+    const i = group.findIndex((t) => t.id === beforeId);
+    if (i >= 0) {
+      const next = group[i].order;
+      const prev = i > 0 ? group[i - 1].order : next - 1000;
+      order = (prev + next) / 2;
+    }
+  }
+  await patchRecord(db.tasks, id, { date, categoryId, order });
+}
+
+async function groupTasks(date: string | null, categoryId: string | null): Promise<Task[]> {
+  const list = date ? await db.tasks.where('date').equals(date).toArray() : await db.tasks.filter((t) => !t.date).toArray();
+  return list.filter((t) => (t.categoryId ?? null) === categoryId);
 }
 
 export async function tasksForDates(dates: string[]): Promise<Task[]> {
-  return sortTasks((await db.tasks.where('date').anyOf(dates).toArray()).filter((t) => !t.deleted));
+  return alive(await db.tasks.where('date').anyOf(dates).toArray()).sort(compareTasks);
 }
 
 export async function somedayTasks(): Promise<Task[]> {
-  return sortTasks(await db.tasks.filter((t) => !t.date && !t.deleted).toArray());
+  return alive(await db.tasks.filter((t) => !t.date).toArray()).sort(compareTasks);
 }

@@ -1,15 +1,25 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
+import { SpheresEditor } from '../components/SpheresEditor';
 import { SYNC_LABELS } from '../components/SyncBadge';
 import { APP_VERSION } from '../config';
-import { db } from '../data/db';
+import { SYNCED } from '../data/db';
+import { updateSettings, useSettings } from '../data/days';
 import { relogin, signOut, useUser } from '../data/session';
 import { syncNow, useSyncStatus } from '../data/sync';
+
+const HOURS = Array.from({ length: 25 }, (_, i) => i);
 
 export function SettingsScreen() {
   const user = useUser();
   const s = useSyncStatus();
-  const pending = useLiveQuery(() => db.tasks.where('dirty').equals(1).count(), []) ?? 0;
+  const settings = useSettings();
+  const pending =
+    useLiveQuery(async () => {
+      let n = 0;
+      for (const t of Object.values(SYNCED)) n += await t.where('dirty').equals(1).count();
+      return n;
+    }, []) ?? 0;
   const [busy, setBusy] = useState(false);
 
   const logout = async () => {
@@ -23,12 +33,55 @@ export function SettingsScreen() {
   };
 
   return (
-    <section className="day-screen">
+    <section className="day-screen settings-screen">
       <div className="screen-head">
         <h2>Настройки</h2>
       </div>
 
       <article className="day-card wide settings">
+        <h3 className="card-title">Сферы жизни</h3>
+        <p className="muted small">Цветные метки задач. Нажмите на кружок, чтобы сменить цвет, или на название — чтобы переименовать.</p>
+        <SpheresEditor />
+      </article>
+
+      <article className="day-card wide settings">
+        <h3 className="card-title">Вид</h3>
+        <div className="row">
+          <span>Стартовый экран</span>
+          <span className="chips">
+            <button className={'chip' + (settings.startScreen === 'week' ? ' on' : '')} onClick={() => void updateSettings({ startScreen: 'week' })}>
+              Неделя
+            </button>
+            <button className={'chip' + (settings.startScreen === 'day' ? ' on' : '')} onClick={() => void updateSettings({ startScreen: 'day' })}>
+              День
+            </button>
+          </span>
+        </div>
+        <div className="row">
+          <span>Шкала часов в «Дне»</span>
+          <span className="field-row">
+            с
+            <select value={settings.dayStartHour} onChange={(e) => void updateSettings({ dayStartHour: Number(e.target.value) })}>
+              {HOURS.filter((h) => h < settings.dayEndHour).map((h) => (
+                <option key={h} value={h}>
+                  {String(h).padStart(2, '0')}:00
+                </option>
+              ))}
+            </select>
+            до
+            <select value={settings.dayEndHour} onChange={(e) => void updateSettings({ dayEndHour: Number(e.target.value) })}>
+              {HOURS.filter((h) => h > settings.dayStartHour).map((h) => (
+                <option key={h} value={h}>
+                  {String(h).padStart(2, '0')}:00
+                </option>
+              ))}
+            </select>
+          </span>
+        </div>
+      </article>
+
+      <article className="day-card wide settings">
+        <h3 className="card-title">Аккаунт и синхронизация</h3>
         <div className="row">
           <span className="muted">Вход</span>
           <span>{user?.email}</span>
@@ -37,12 +90,7 @@ export function SettingsScreen() {
           <span className="muted">Синхронизация</span>
           <span>
             {SYNC_LABELS[s.state]}
-            {s.lastOk && (
-              <span className="muted">
-                {' '}
-                · {new Date(s.lastOk).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            )}
+            {s.lastOk && <span className="muted"> · {new Date(s.lastOk).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>}
           </span>
         </div>
         {s.message && s.state !== 'ok' && <p className="error">{s.message}</p>}
