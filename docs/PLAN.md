@@ -74,3 +74,12 @@
 4. Вечерний разбор, планирование недели.
 5. Темы (пастельные + своя), свои SVG-стикеры + загрузка PNG, мудборд.
 6. Напоминания, таймер, полировка офлайн-синхронизации.
+
+## Результаты проверки доступности (04.11.2026, без VPN, Екатеринбург)
+
+Телефон (iPhone, Safari) и компьютер (Windows, Яндекс Браузер) — одинаково:
+- Доступны: GitHub Pages, Supabase (supabase.com, api.supabase.com, supabase.co), Netlify, Firebase, Timeweb, Yandex Cloud, vercel.com.
+- Недоступны (таймаут): vercel.app, pages.dev (Cloudflare Pages).
+
+**Решение:** хостинг — GitHub Pages, бэкенд — Supabase (регион Central EU, Frankfurt).
+Запасной вариант — PocketBase на Timeweb.
