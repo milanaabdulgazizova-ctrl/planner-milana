@@ -83,3 +83,17 @@
 
 **Решение:** хостинг — GitHub Pages, бэкенд — Supabase (регион Central EU, Frankfurt).
 Запасной вариант — PocketBase на Timeweb.
+
+## Как устроено (этап 1)
+
+- Публикация: GitHub Actions (`.github/workflows/deploy.yml`) собирает сайт при каждом пуше в `main`
+  и выкладывает на https://milanaabdulgazizova-ctrl.github.io/planner-milana/ (Settings → Pages → Source: GitHub Actions).
+- Страница проверки сервисов: `public/check/index.html` → `/planner-milana/check/`.
+- База в облаке: одна таблица `records` (id, kind, data jsonb, updated_at, deleted, server_updated_at), RLS «только своё»,
+  удаления мягкие. Скрипт: `supabase/setup.sql`. Новые виды данных не требуют менять базу.
+- Локально: Dexie (`src/data/db.ts`), у каждой записи `updatedAt`, `deleted`, `dirty`.
+- Синхронизация (`src/data/sync.ts`): отправить изменённое (`dirty`) → скачать новое по `server_updated_at`;
+  конфликт — побеждает более позднее изменение (и на устройстве, и на сервере через триггер).
+- Облако за интерфейсом `Backend` (`src/data/backend.ts`), реализация — `supabaseBackend.ts`.
+- Вход: код из письма, `shouldCreateUser: false` — новых пользователей приложение не создаёт;
+  владелец добавлен вручную в Supabase, регистрация выключена.
