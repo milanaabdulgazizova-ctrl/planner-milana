@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { AuthRequiredError, isNetworkLike, type Backend, type RemoteRow } from './backend';
 import { db, getMeta, setMeta, SYNCED, SYNCED_KINDS_SIGNATURE, type SyncFields } from './db';
 import { supabaseBackend } from './supabaseBackend';
+import { syncBlobs } from './assets';
 
 export const backend: Backend = supabaseBackend;
 
@@ -124,6 +125,7 @@ export async function syncNow(): Promise<void> {
         again = false;
         await pushAll();
         await pullAll();
+        await syncBlobs();
       } while (again && gen === generation);
     })();
     const timeout = new Promise<never>((_, reject) => {

@@ -29,6 +29,11 @@ export interface Backend {
   push(rows: RemoteRow[]): Promise<void>;
   /** Записи, дошедшие до сервера строго позже since (по server_updated_at), по возрастанию. */
   pull(since: string | null, limit: number): Promise<RemoteRow[]>;
+
+  /** Файлы (картинки): путь — относительно папки пользователя. */
+  uploadFile(path: string, blob: Blob): Promise<void>;
+  downloadFile(path: string): Promise<Blob>;
+  deleteFile(path: string): Promise<void>;
 }
 
 export class AuthRequiredError extends Error {

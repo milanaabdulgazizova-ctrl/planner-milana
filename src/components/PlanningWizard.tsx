@@ -195,7 +195,7 @@ export function PlanningWizard({ weekStart }: { weekStart: string }) {
         {step === 1 && (
           <div className="plan-step">
             <h3>Фокус и цели</h3>
-            <p className="muted small">2–3 главные цели на неделю. Мудборд из картинок появится на этапе 5.</p>
+            <p className="muted small">2–3 главные цели на неделю и картинки для настроения.</p>
             <WeekFocus weekStart={weekStart} />
           </div>
         )}

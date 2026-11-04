@@ -74,6 +74,10 @@ export const supabaseBackend: Backend = {
     if (error) throw toSyncError(error);
   },
 
+  uploadFile: (path, blob) => storageApi.uploadFile(path, blob),
+  downloadFile: (path) => storageApi.downloadFile(path),
+  deleteFile: (path) => storageApi.deleteFile(path),
+
   async pull(since, limit) {
     if (!(await this.hasSession())) throw new AuthRequiredError();
     let q = supabase
@@ -85,6 +89,38 @@ export const supabaseBackend: Backend = {
     const { data, error } = await q;
     if (error) throw toSyncError(error);
     return (data ?? []) as RemoteRow[];
+  },
+};
+
+const BUCKET = 'planner';
+
+/** Полный путь в хранилище: каждый пользователь — в своей папке (так устроены правила доступа). */
+async function fullPath(path: string): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) throw new AuthRequiredError();
+  return `${data.session.user.id}/${path}`;
+}
+
+function toStorageError(e: { message?: string; statusCode?: string | number; name?: string }): Error {
+  const msg = e.message ?? String(e);
+  if (isNetworkLike(new Error(msg))) return new NetworkError();
+  if (/bucket not found/i.test(msg)) return new Error('Хранилище картинок не настроено (нужно выполнить supabase/storage.sql)');
+  return new Error(msg);
+}
+
+export const storageApi = {
+  async uploadFile(path: string, blob: Blob) {
+    const { error } = await supabase.storage.from(BUCKET).upload(await fullPath(path), blob, { upsert: true, contentType: blob.type });
+    if (error) throw toStorageError(error);
+  },
+  async downloadFile(path: string) {
+    const { data, error } = await supabase.storage.from(BUCKET).download(await fullPath(path));
+    if (error || !data) throw toStorageError(error ?? { message: 'Файл не найден' });
+    return data;
+  },
+  async deleteFile(path: string) {
+    const { error } = await supabase.storage.from(BUCKET).remove([await fullPath(path)]);
+    if (error) throw toStorageError(error);
   },
 };
 

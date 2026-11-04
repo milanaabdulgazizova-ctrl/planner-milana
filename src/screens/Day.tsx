@@ -1,5 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { DayStickersRow, StickerPicker } from '../components/Stickers';
+import { stickersForDates } from '../data/assets';
 import { DayBoard, DayNoteField } from '../components/DayBoard';
 import { Timeline } from '../components/Timeline';
 import { HabitChecks } from '../components/HabitChecks';
@@ -19,6 +21,8 @@ export function DayScreen({ date, onDateChange }: { date: string; onDateChange: 
   const settings = useSettings();
   const habits = useHabits();
   const checks = useHabitChecks([date]);
+  const stickers = useLiveQuery(() => stickersForDates([date]), [date])?.[0]?.items ?? [];
+  const [picker, setPicker] = useState(false);
   const today = todayISO();
 
   return (
@@ -42,6 +46,9 @@ export function DayScreen({ date, onDateChange }: { date: string; onDateChange: 
           </button>
         </div>
       </div>
+
+      <DayStickersRow date={date} items={stickers} onAdd={() => setPicker(true)} />
+      {picker && <StickerPicker date={date} onClose={() => setPicker(false)} />}
 
       <div className="day-layout">
         <div className="day-col">

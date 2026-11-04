@@ -4,6 +4,8 @@ import { DayBoard, DayNoteField } from '../components/DayBoard';
 import { TaskGroup } from '../components/TaskGroup';
 import { WeekFocus } from '../components/WeekFocus';
 import { openOverlay } from '../components/uiStore';
+import { Sticker } from '../components/Stickers';
+import { stickersForDates } from '../data/assets';
 import { HabitChecks } from '../components/HabitChecks';
 import { useHabitChecks, useHabits } from '../data/habits';
 import { categoriesForDates } from '../data/categories';
@@ -20,6 +22,7 @@ export function WeekScreen({ onOpenDay }: { onOpenDay: (date: string) => void })
   const categories = useLiveQuery(() => categoriesForDates(days), [weekStart]) ?? [];
   const notes = useLiveQuery(() => notesForDates(days), [weekStart]) ?? [];
   const someday = useLiveQuery(somedayTasks, []) ?? [];
+  const stickers = useLiveQuery(() => stickersForDates(days), [weekStart]) ?? [];
   const sphereList = useSpheres();
   const spheres = useMemo(() => new Map(sphereList.map((s) => [s.id, s])), [sphereList]);
   const habits = useHabits();
@@ -80,6 +83,11 @@ export function WeekScreen({ onOpenDay }: { onOpenDay: (date: string) => void })
                 <span className="weekday">{formatWeekday(d)}</span>
                 <span className="date muted">{formatDayMonth(d)}</span>
               </button>
+              <span className="day-stickers">
+                {(stickers.find((x) => x.date === d)?.items ?? []).slice(0, 4).map((it, i) => (
+                  <Sticker key={i} item={it} size={24} />
+                ))}
+              </span>
             </header>
             <DayBoard date={d} tasks={tasks.filter((t) => t.date === d)} categories={categories.filter((c) => c.date === d)} spheres={spheres} />
             <HabitChecks date={d} habits={habits} checks={checks} />

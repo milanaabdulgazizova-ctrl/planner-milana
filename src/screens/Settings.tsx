@@ -8,27 +8,44 @@ import { startOfWeek, todayISO } from '../lib/dates';
 import { SYNC_LABELS } from '../components/SyncBadge';
 import { APP_VERSION } from '../config';
 import { SYNCED } from '../data/db';
-import { applyBgColor, BG_COLORS, updateSettings, useSettings } from '../data/days';
+import { ACCENT_COLORS, BG_COLORS, THEMES, updateSettings, useSettings } from '../data/days';
 import { relogin, signOut, useUser } from '../data/session';
 import { syncNow, useSyncStatus } from '../data/sync';
 
-/** «Свой цвет»: палитра браузера. Цвет меняется сразу, сохраняется с небольшой задержкой. */
-function CustomBgSwatch({ value, active }: { value: string; active: boolean }) {
+/** «Свой цвет»: палитра браузера. Сохраняется с небольшой задержкой (палитра шлёт много событий). */
+function CustomColorSwatch({ value, active, onPick }: { value: string; active: boolean; onPick: (c: string) => void }) {
   const [color, setColor] = useState(value);
   useEffect(() => setColor(value), [value]);
   useEffect(() => {
     if (color.toLowerCase() === value.toLowerCase()) return;
-    applyBgColor(color);
-    const t = setTimeout(() => void updateSettings({ bgColor: color }), 400);
+    const t = setTimeout(() => onPick(color), 300);
     return () => clearTimeout(t);
-  }, [color, value]);
+  }, [color, value, onPick]);
   return (
-    <label className={'swatch custom' + (active ? ' on' : '')} style={{ background: color }} title="Свой цвет">
+    <label className={'swatch custom' + (active ? ' on' : '')} style={active ? { background: color } : undefined} title="Свой цвет">
       <span aria-hidden="true">+</span>
-      <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Свой цвет фона" />
+      <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Свой цвет" />
     </label>
   );
 }
+
+function ColorRow({ label, colors, value, onPick }: { label: string; colors: [string, string][]; value: string; onPick: (c: string) => void }) {
+  const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+  return (
+    <div className="row bg-row">
+      <span>{label}</span>
+      <span className="color-picker">
+        {colors.map(([c, name]) => (
+          <button key={c} className={'swatch' + (same(value, c) ? ' on' : '')} style={{ background: c }} title={name} aria-label={name} onClick={() => onPick(c)} />
+        ))}
+        <CustomColorSwatch value={value} active={!colors.some(([c]) => same(c, value))} onPick={onPick} />
+      </span>
+    </div>
+  );
+}
+
+const pickBg = (c: string) => void updateSettings({ bgColor: c });
+const pickAccent = (c: string) => void updateSettings({ accentColor: c });
 
 const HOURS = Array.from({ length: 25 }, (_, i) => i);
 
@@ -68,22 +85,24 @@ export function SettingsScreen() {
 
       <article className="day-card wide settings">
         <h3 className="card-title">Вид</h3>
-        <div className="row bg-row">
-          <span>Цвет фона</span>
-          <span className="color-picker">
-            {BG_COLORS.map(([c, name]) => (
-              <button
-                key={c}
-                className={'swatch' + (settings.bgColor.toLowerCase() === c.toLowerCase() ? ' on' : '')}
-                style={{ background: c }}
-                title={name}
-                aria-label={name}
-                onClick={() => void updateSettings({ bgColor: c })}
-              />
-            ))}
-            <CustomBgSwatch value={settings.bgColor} active={!BG_COLORS.some(([c]) => c.toLowerCase() === settings.bgColor.toLowerCase())} />
-          </span>
+        <span className="field-label">Тема</span>
+        <div className="themes">
+          {THEMES.map((t) => {
+            const on = settings.bgColor.toLowerCase() === t.bg.toLowerCase() && settings.accentColor.toLowerCase() === t.accent.toLowerCase();
+            return (
+              <button key={t.name} className={'theme-tile' + (on ? ' on' : '')} style={{ background: t.bg }} onClick={() => void updateSettings({ bgColor: t.bg, accentColor: t.accent })}>
+                <span className="theme-card">
+                  <span className="theme-dot" style={{ background: t.accent }} />
+                  <span className="theme-line" />
+                </span>
+                <span className="theme-name">{t.name}</span>
+              </button>
+            );
+          })}
         </div>
+        <span className="field-label">Своя тема</span>
+        <ColorRow label="Фон" colors={BG_COLORS} value={settings.bgColor} onPick={pickBg} />
+        <ColorRow label="Акцент" colors={ACCENT_COLORS} value={settings.accentColor} onPick={pickAccent} />
         <div className="row">
           <span>Стартовый экран</span>
           <span className="chips">

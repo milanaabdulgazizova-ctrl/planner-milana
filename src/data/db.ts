@@ -58,6 +58,36 @@ export interface HabitCheck extends SyncFields {
   done: boolean;
 }
 
+/** Картинка (стикер или фото для мудборда). Сам файл — в таблице blobs и в облачном хранилище. */
+export interface Asset extends SyncFields {
+  purpose: 'sticker' | 'moodboard';
+  /** Путь в хранилище (внутри папки пользователя). */
+  path: string;
+  mime: string;
+  width: number;
+  height: number;
+  createdAt: number;
+}
+
+/** Стикеры дня. id = uuidFrom('stickers:' + date). Элементы: 'svg:<имя>' или 'img:<id картинки>'. */
+export interface DayStickers extends SyncFields {
+  date: string;
+  items: string[];
+}
+
+/** Мудборд недели. id = uuidFrom('moodboard:' + weekStart). */
+export interface Moodboard extends SyncFields {
+  weekStart: string;
+  assetIds: string[];
+}
+
+/** Локальная копия файла картинки (не синхронизируется как запись). pending = 1 — ещё не загружен в облако. */
+export interface LocalBlob {
+  id: string;
+  blob: Blob;
+  pending: 0 | 1;
+}
+
 /** Сфера жизни: работа, учёба… — цветная метка задачи. */
 export interface Sphere extends SyncFields {
   name: string;
@@ -91,6 +121,8 @@ export interface Settings extends SyncFields {
   startScreen: 'week' | 'day';
   /** Цвет фона приложения. */
   bgColor: string;
+  /** Акцентный цвет (кнопки, галочки, выделение). */
+  accentColor: string;
   /** Время вечернего разбора «HH:MM». */
   reviewTime: string;
   /** День планирования недели: 0 = пн … 6 = вс. */
@@ -114,6 +146,10 @@ class PlannerDB extends Dexie {
   settings!: Table<Settings, string>;
   habits!: Table<Habit, string>;
   habitChecks!: Table<HabitCheck, string>;
+  assets!: Table<Asset, string>;
+  dayStickers!: Table<DayStickers, string>;
+  moodboards!: Table<Moodboard, string>;
+  blobs!: Table<LocalBlob, string>;
   meta!: Table<Meta, string>;
 
   constructor() {
@@ -142,6 +178,21 @@ class PlannerDB extends Dexie {
       habitChecks: 'id, date, habitId, dirty',
       meta: 'key',
     });
+    this.version(4).stores({
+      tasks: 'id, date, dirty, occurrenceDate, seriesId',
+      spheres: 'id, dirty',
+      categories: 'id, date, dirty',
+      dayNotes: 'id, date, dirty',
+      weekFocus: 'id, weekStart, dirty',
+      settings: 'id, dirty',
+      habits: 'id, dirty',
+      habitChecks: 'id, date, habitId, dirty',
+      assets: 'id, purpose, dirty',
+      dayStickers: 'id, date, dirty',
+      moodboards: 'id, weekStart, dirty',
+      blobs: 'id, pending',
+      meta: 'key',
+    });
   }
 }
 
@@ -161,6 +212,9 @@ export const SYNCED: Record<string, Table<any, string>> = {
   settings: db.settings,
   habit: db.habits,
   habitCheck: db.habitChecks,
+  asset: db.assets,
+  dayStickers: db.dayStickers,
+  moodboard: db.moodboards,
 };
 
 /** Меняется при добавлении новых видов записей — тогда скачиваем всё из облака заново. */

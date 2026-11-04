@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { setWeekGoals, useWeekFocus } from '../data/days';
+import { Moodboard } from './Moodboard';
 
-/** Фокус недели: 2–3 главные цели. (Мудборд добавится на этапе 5.) */
+/** Фокус недели: 2–3 главные цели и мудборд из своих картинок. */
 export function WeekFocus({ weekStart }: { weekStart: string }) {
   const saved = useWeekFocus(weekStart);
   const [goals, setGoals] = useState<string[]>(['', '', '']);
@@ -20,6 +21,7 @@ export function WeekFocus({ weekStart }: { weekStart: string }) {
   return (
     <section className="focus-card">
       <h3>Фокус недели</h3>
+      <div className="focus-body">
       <ol className="focus-goals">
         {goals.map((g, i) => (
           <li key={i}>
@@ -34,6 +36,8 @@ export function WeekFocus({ weekStart }: { weekStart: string }) {
           </li>
         ))}
       </ol>
+      <Moodboard weekStart={weekStart} />
+      </div>
     </section>
   );
 }

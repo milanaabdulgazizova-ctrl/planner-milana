@@ -14,7 +14,7 @@ import { DueBanners } from './components/DueBanners';
 import { useOverlay } from './components/uiStore';
 import { TaskRowView } from './components/TaskRow';
 import { ensureDefaultSpheres } from './data/spheres';
-import { applyBgColor, useSettings } from './data/days';
+import { applyTheme, useSettings } from './data/days';
 import { useUser } from './data/session';
 import { startAutoSync } from './data/sync';
 import { todayISO } from './lib/dates';
@@ -37,7 +37,7 @@ export function App() {
 
   const settings = useSettings();
   const overlay = useOverlay();
-  useEffect(() => applyBgColor(settings.bgColor), [settings.bgColor]);
+  useEffect(() => applyTheme(settings.bgColor, settings.accentColor), [settings.bgColor, settings.accentColor]);
 
   useEffect(() => {
     if (!user) return;
